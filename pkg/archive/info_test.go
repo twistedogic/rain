@@ -7,6 +7,7 @@ import (
 )
 
 func Test_Client_GetAllSymbols(t *testing.T) {
+	t.Skip()
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 	symbols, err := New().GetAllSymbols(ctx)
