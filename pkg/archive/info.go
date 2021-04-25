@@ -3,19 +3,15 @@ package archive
 import (
 	"context"
 	"net/http"
+
+	"github.com/twistedogic/rain/pkg/event"
 )
 
-type Symbol struct {
-	Name  string `json:"symbol"`
-	Base  string `json:"baseAsset"`
-	Quote string `json:"quoteAsset"`
-}
-
 type exchangeInfo struct {
-	Symbols []Symbol `json:"symbols"`
+	Symbols []event.Symbol `json:"symbols"`
 }
 
-func (c Client) GetAllSymbols(ctx context.Context) ([]Symbol, error) {
+func (c Client) GetAllSymbols(ctx context.Context) ([]event.Symbol, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", symbolsURL, nil)
 	if err != nil {
 		return nil, err

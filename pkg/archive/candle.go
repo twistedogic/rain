@@ -6,30 +6,26 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/twistedogic/rain/pkg/event"
 )
 
-type Candle struct {
-	Symbol                                           string
-	OpenTime, CloseTime                              time.Time
-	Open, High, Low, Close, Volume, QuoteAssetVolume float64
-	NumberOfTrades                                   int
-	TakerBaseAssetVolume, TakerQuoteAssetVolume      float64
-}
-
-func parseCandle(symbol string, row []string, c *Candle) error {
+func parseCandle(symbol string, row []string, c *event.Candle) error {
 	var err error
-	c.Symbol = symbol
-	c.OpenTime, err = parseTimeField(err, row[0])
-	c.Open, err = parseFloatField(err, row[1])
-	c.High, err = parseFloatField(err, row[2])
-	c.Low, err = parseFloatField(err, row[3])
-	c.Close, err = parseFloatField(err, row[4])
-	c.Volume, err = parseFloatField(err, row[5])
-	c.CloseTime, err = parseTimeField(err, row[6])
-	c.QuoteAssetVolume, err = parseFloatField(err, row[7])
-	c.NumberOfTrades, err = parseIntField(err, row[8])
-	c.TakerBaseAssetVolume, err = parseFloatField(err, row[9])
-	c.TakerQuoteAssetVolume, err = parseFloatField(err, row[10])
+	s := event.SymbolTicker{}
+	s.Symbol = symbol
+	c.OpenTime, err = event.ParseTimeField(err, row[0])
+	s.Open, err = event.ParseFloatField(err, row[1])
+	s.High, err = event.ParseFloatField(err, row[2])
+	s.Low, err = event.ParseFloatField(err, row[3])
+	s.Close, err = event.ParseFloatField(err, row[4])
+	s.BaseVolume, err = event.ParseFloatField(err, row[5])
+	c.CloseTime, err = event.ParseTimeField(err, row[6])
+	s.QuoteVolume, err = event.ParseFloatField(err, row[7])
+	c.NumberOfTrades, err = event.ParseIntField(err, row[8])
+	c.TakerBaseVolume, err = event.ParseFloatField(err, row[9])
+	c.TakerQuoteVolume, err = event.ParseFloatField(err, row[10])
+	c.SymbolTicker = s
 	return err
 }
 
@@ -45,8 +41,8 @@ func getSymbolCandlesURLs(symbol string, start, end time.Time, window time.Durat
 	return urls
 }
 
-func (c Client) GetSymbolCandles(ctx context.Context, s Symbol, start, end time.Time, window time.Duration) ([]Candle, error) {
-	candles := make([]Candle, 0)
+func (c Client) GetSymbolCandles(ctx context.Context, s event.Symbol, start, end time.Time, window time.Duration) ([]event.Candle, error) {
+	candles := make([]event.Candle, 0)
 	urls := getSymbolCandlesURLs(s.Name, start, end, window)
 	for _, u := range urls {
 		req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
@@ -58,7 +54,7 @@ func (c Client) GetSymbolCandles(ctx context.Context, s Symbol, start, end time.
 			return nil, err
 		}
 		for _, row := range rows {
-			var c Candle
+			var c event.Candle
 			if err := parseCandle(s.Name, row, &c); err != nil {
 				return nil, err
 			}

@@ -6,23 +6,18 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/twistedogic/rain/pkg/event"
 )
 
-type Trade struct {
-	Symbol                   string
-	Id                       int
-	Price, BaseQty, QuoteQty float64
-	Time                     time.Time
-}
-
-func parseTrade(symbol string, row []string, t *Trade) error {
+func parseTrade(symbol string, row []string, t *event.Trade) error {
 	var err error
 	t.Symbol = symbol
-	t.Id, err = parseIntField(err, row[0])
-	t.Price, err = parseFloatField(err, row[1])
-	t.BaseQty, err = parseFloatField(err, row[2])
-	t.QuoteQty, err = parseFloatField(err, row[3])
-	t.Time, err = parseTimeField(err, row[4])
+	t.Id, err = event.ParseIntField(err, row[0])
+	t.Price, err = event.ParseFloatField(err, row[1])
+	t.BaseQty, err = event.ParseFloatField(err, row[2])
+	t.QuoteQty, err = event.ParseFloatField(err, row[3])
+	t.Time, err = event.ParseTimeField(err, row[4])
 	return err
 }
 
@@ -37,8 +32,8 @@ func getSymbolTradesURLs(symbol string, start, end time.Time) []string {
 	return urls
 }
 
-func (c Client) GetSymbolTrades(ctx context.Context, s Symbol, start, end time.Time) ([]Trade, error) {
-	trades := make([]Trade, 0)
+func (c Client) GetSymbolTrades(ctx context.Context, s event.Symbol, start, end time.Time) ([]event.Trade, error) {
+	trades := make([]event.Trade, 0)
 	urls := getSymbolTradesURLs(s.Name, start, end)
 	for _, u := range urls {
 		req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
@@ -50,7 +45,7 @@ func (c Client) GetSymbolTrades(ctx context.Context, s Symbol, start, end time.T
 			return nil, err
 		}
 		for _, row := range rows {
-			var t Trade
+			var t event.Trade
 			if err := parseTrade(s.Name, row, &t); err != nil {
 				return nil, err
 			}
